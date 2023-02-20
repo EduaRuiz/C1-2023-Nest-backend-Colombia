@@ -12,4 +12,5 @@ export interface CustomerRepositoryInterface
   findOneByPhone(phone: string): CustomerEntity;
   findByState(state: boolean): Array<CustomerEntity>;
   findByFullName(fullName: string): Array<CustomerEntity>;
+  findOneByFirebase(firebaseId: string, firebaseEmail: string): CustomerEntity;
 }

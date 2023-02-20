@@ -2,7 +2,6 @@ import {
   Body,
   Controller,
   Delete,
-  Get,
   Param,
   ParseUUIDPipe,
   Post,
@@ -20,9 +19,8 @@ import { Auth, GetCustomer } from 'src/common/decorators';
 export class TransfersController {
   constructor(private readonly transferService: TransferService) {}
 
-  @Get('')
+  @Post('all')
   @Auth()
-  //@UseGuards(AuthGuard())
   getAll(
     @GetCustomer('id', ParseUUIDPipe) customerId: string,
     @Body('pagination') pagination: PaginationDto,
@@ -30,7 +28,7 @@ export class TransfersController {
   ): JSON {
     return JSON.parse(
       JSON.stringify(
-        this.transferService.getHistoryByCustomer(
+        this.transferService.getHistoryInByCustomer(
           customerId,
           <PaginationModel>pagination,
           <DateRangeModel>dateRange,
@@ -39,7 +37,7 @@ export class TransfersController {
     );
   }
 
-  @Get('account/:id')
+  @Post('all/:id')
   @Auth()
   getAllByAccount(
     @Param('id', ParseUUIDPipe) accountId: string,
@@ -47,17 +45,15 @@ export class TransfersController {
     @Body('dateRange') dateRange?: DateRangeDto,
   ): JSON {
     return JSON.parse(
-      JSON.stringify(
-        this.transferService.getHistory(
-          accountId,
-          <PaginationModel>pagination,
-          <DateRangeModel>dateRange,
-        ),
+      this.transferService.getHistory(
+        accountId,
+        <PaginationModel>pagination,
+        <DateRangeModel>dateRange,
       ),
     );
   }
 
-  @Get('income/:id')
+  @Post('income/:id')
   @Auth()
   getByIncomeAccount(
     @Param('id', ParseUUIDPipe) accountId: string,
@@ -65,17 +61,15 @@ export class TransfersController {
     @Body('dateRange') dateRange?: DateRangeDto,
   ): JSON {
     return JSON.parse(
-      JSON.stringify(
-        this.transferService.getHistoryIn(
-          accountId,
-          <PaginationModel>pagination,
-          <DateRangeModel>dateRange,
-        ),
+      this.transferService.getHistoryIn(
+        accountId,
+        <PaginationModel>pagination,
+        <DateRangeModel>dateRange,
       ),
     );
   }
 
-  @Get('outcome/:id')
+  @Post('outcome/:id')
   @Auth()
   getByOutcomeAccount(
     @Param('id', ParseUUIDPipe) accountId: string,
@@ -83,36 +77,49 @@ export class TransfersController {
     @Body('dateRange') dateRange?: DateRangeDto,
   ): JSON {
     return JSON.parse(
-      JSON.stringify(
-        this.transferService.getHistoryOut(
-          accountId,
-          <PaginationModel>pagination,
-          <DateRangeModel>dateRange,
-        ),
+      this.transferService.getHistoryOut(
+        accountId,
+        <PaginationModel>pagination,
+        <DateRangeModel>dateRange,
       ),
     );
   }
 
-  @Post()
+  @Post('add')
   @Auth()
   createTransfer(
     @Body() createTransferDto: CreateTransferDto,
     @GetCustomer('id', ParseUUIDPipe) customerId: string,
   ): JSON {
     return JSON.parse(
-      JSON.stringify(
-        this.transferService.createTransfer(customerId, createTransferDto),
-      ),
+      this.transferService.createTransfer(customerId, createTransferDto),
     );
   }
 
   @Delete(':id')
   @Auth()
   deleteTransfer(
-    @Param('id', ParseUUIDPipe) depositId: string,
+    @Param('id', ParseUUIDPipe) transferId: string,
     @GetCustomer('id', ParseUUIDPipe) customerId: string,
   ): boolean {
-    this.transferService.deleteTransfer(customerId, depositId);
+    this.transferService.deleteTransfer(customerId, transferId);
     return true;
+  }
+
+  @Post('negative/:id')
+  @Auth()
+  getNegative(
+    @Param('id') accountId: string,
+    @GetCustomer('id', ParseUUIDPipe) customerId: string,
+    @Body('pagination') pagination: PaginationDto,
+    @Body('dateRange') dateRange?: DateRangeDto,
+  ): JSON {
+    return JSON.parse(
+      this.transferService.getNegative(
+        accountId,
+        <PaginationModel>pagination,
+        <DateRangeModel>dateRange,
+      ),
+    );
   }
 }

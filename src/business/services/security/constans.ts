@@ -1,3 +1,19 @@
+//import GOOGLE_APPLICATION_CREDENTIALS  from '../security/sofkabank-71571-firebase-adminsdk-bxy4e-d29c9aaa28.json'
 export const jwtConstants = {
   JTW_SECRET: 'My53cr3dT0k3nOnePiece',
+  GOOGLE_APPLICATION_CREDENTIALS: {
+    type: 'service_account',
+    project_id: 'sofkabank-71571',
+    private_key_id: 'd29c9aaa28db8ac0b3429ed5422449de6c8a868a',
+    private_key:
+      '-----BEGIN PRIVATE KEY-----\nMIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQCoAyyEj/WWlGvP\n6zY1wm3tXlLq9TlZ/X/gzBuRyxIfpKoNZyKdvKlHGfhWK6cnd9wF8AnNa6+G/mxQ\ntQ5peeLRccxQzKuo+e+Ok3hLV2JphAu52DY45Qgk8AhCAioEDGolbLzZYhnaHKy7\njnAZfAEJnZkx2cKxsJlIGUYAPPCPhLx0JN5ksSI72ms/yJmISyLpa72cM6VPAexJ\n/1QjLFJ+yUaoaONsw+L/KhfC2i2ih1ZnwZhJj2uI4OzKXucMhUS0tFxi6CW/L+DD\nwhZRzBC1yoaxSFCTEPLuyKtlQdgdwl4vUztevZ7bOVypOHWYZpI1gq9Imn0K0hB0\nRjpPimMlAgMBAAECggEAF+KjoJDqxCaDkUKKKWhjwlwng5mrNpzwYiACR17MS81Y\nE6G27R/WHPKXOIDqOZUzpXBzpE2L3bAr6+lhjCM02LvJ5S7DtLkbknRqpKNerUuF\ncz1GsB33Y3Dwa5ntKTgumvVzf6APts9eyyc7zpOvfhN2pPylTieiEvrs1bnUJULp\ni4I0EUsBaIbkD5Evwwza3sAx4OfZuAvGLPURMdML0Wo/bYRLJCdOjFmwX5ADQ/ks\nmgn+9ql1Id9LqacaDgfCqH23D7QHDGoeeiZbLFfSjzz0G85+Vp8ohIS7J+ZuLbTA\nLZmabo0QWi1r8YeHQVUhgVY63kqH9nOHRRczbcaD3QKBgQDbiIPBz0LvLtHTScmv\nCS70BD3LvUsz9zCQukmzK8UtAR+GcsORSk3OrY+UjYgAZUkiYg7J98GVq+OwTTzR\n3pdx/Is0m/5+xcGX3vA/6qgeDootm1qGumungOdw7+ZLseeM0nEej5nys+fbkBcB\nbY6qMRUdlqr26gFoEMH14eDBhwKBgQDD68YNSwWMjiNeAASYOZPDhvzarXwj3JlT\noMQMwqQggUK+wn+v7XlUbmSAQulNlGMImnDOk4RCMdNKzjkkyFNNj4M1a+FOYKDm\nU+KI0SxGpdYA+YBfV/V3uv/70mChKZVAB3beykMp0z77UNAZ8BZymMEXrzRYkocH\nKotsp6PQ8wKBgDfzeBkqONX66dFe6f8paQUaG6HUkdkhtAf+4o++pRdORPmgQEXE\nWUZGp+Rlmfb32Ybg1QIWmgkKcRJa7RhUEeckRVpYM6mdvzR0xmiT5tsaO49aG91g\nn9VmHhaDnf9GzUvvypLOaJ8ZyQsFk0dy47xunAIZh2M8yrT6KGUBd6X7AoGBAJ+R\nqyfuf2F/7txDhXp6AphQnCZ6/82xgQu0t5hw+v4iaTs27IpcDuKuWpqAZMYz4gkC\nyHfne+Px8tZNagtEQVy9Uy8yYznTx5hwn+OxAa+0p7z5eQ2udRWEL7NpIByC4rVY\nnv9LmzI4hGZp5mQJwC6rrTDeGPM+vE0g4JepXenzAoGAeN6XnNq/WHFp6xxbsktD\nLxWoGz4WwTxYS9U2bOkBLQ8I/kMP51/ZuYrfnhDDPJSzkQxfV3FBmKnGD86mtkDK\nuWCAJVXLTtRn7MmlNVplNh3gpg4cn40WHWvh5yFQuUDMh+KwKbweSyzjp2WixsIV\n8HD65aKks4XVl3WoIz8mgwg=\n-----END PRIVATE KEY-----\n',
+    client_email:
+      'firebase-adminsdk-bxy4e@sofkabank-71571.iam.gserviceaccount.com',
+    client_id: '104103945537515682896',
+    auth_uri: 'https://accounts.google.com/o/oauth2/auth',
+    token_uri: 'https://oauth2.googleapis.com/token',
+    auth_provider_x509_cert_url: 'https://www.googleapis.com/oauth2/v1/certs',
+    client_x509_cert_url:
+      'https://www.googleapis.com/robot/v1/metadata/x509/firebase-adminsdk-bxy4e%40sofkabank-71571.iam.gserviceaccount.com',
+  },
 };

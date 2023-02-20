@@ -1,8 +1,4 @@
-import {
-  BadRequestException,
-  ConflictException,
-  Injectable,
-} from '@nestjs/common';
+import { ConflictException, Injectable } from '@nestjs/common';
 import { CreateTransferDto } from 'src/business/dtos';
 import { DateRangeModel, PaginationModel } from 'src/data/models';
 import { TransferEntity } from 'src/data/persistence/entities';
@@ -22,57 +18,72 @@ export class TransferService {
     return this.transferRepository.findAll();
   }
 
-  getHistoryByCustomer(
+  getAllByCustomer(
     customerId: string,
     pagination: PaginationModel,
     dateRange?: DateRangeModel,
-  ): TransferEntity[] {
+  ): string {
     const accounts = this.accountService.getAccountsByCustomer(customerId);
     const totalTransfers: TransferEntity[] = [];
     for (const account of accounts) {
       totalTransfers.push(
-        ...this.getHistory(account.id, pagination, dateRange),
+        ...this.transferRepository.findByIncomeAccount(account.id),
+        ...this.transferRepository.findByOutcomeAccount(account.id),
       );
     }
-    return totalTransfers;
+    const pageTransfers = this.historyPagination(
+      totalTransfers,
+      pagination,
+      dateRange,
+    );
+    return JSON.stringify(pageTransfers);
   }
 
   getHistoryOutByCustomer(
     customerId: string,
     pagination: PaginationModel,
     dateRange?: DateRangeModel,
-  ): TransferEntity[] {
+  ): string {
     const accounts = this.accountService.getAccountsByCustomer(customerId);
     const totalTransfers: TransferEntity[] = [];
     for (const account of accounts) {
       totalTransfers.push(
-        ...this.getHistoryOut(account.id, pagination, dateRange),
+        ...this.transferRepository.findByOutcomeAccount(account.id),
       );
     }
-    return totalTransfers;
+    const result = this.historyPagination(
+      totalTransfers,
+      pagination,
+      dateRange,
+    );
+    return JSON.stringify(result);
   }
 
   getHistoryInByCustomer(
     customerId: string,
     pagination: PaginationModel,
     dateRange?: DateRangeModel,
-  ): TransferEntity[] {
+  ): string {
     const accounts = this.accountService.getAccountsByCustomer(customerId);
     const totalTransfers: TransferEntity[] = [];
     for (const account of accounts) {
       totalTransfers.push(
-        ...this.getHistoryIn(account.id, pagination, dateRange),
+        ...this.transferRepository.findByIncomeAccount(account.id),
       );
     }
-    return totalTransfers;
+    const result = this.historyPagination(
+      totalTransfers,
+      pagination,
+      dateRange,
+    );
+    return JSON.stringify(result);
   }
   //Registra la transferancia en el sistema y actualiza el balance en las cuentas afectadas
-  createTransfer(
-    customerId: string,
-    transfer: CreateTransferDto,
-  ): TransferEntity {
-    const incomeAccount = this.accountService.getAccountById(
-      customerId,
+  createTransfer(customerId: string, transfer: CreateTransferDto): string {
+    if (transfer.incomeId === transfer.outcomeId) {
+      throw new ConflictException('No se puede transferir a la misma cuenta');
+    }
+    const incomeAccount = this.accountService.getAnyAccountById(
       transfer.incomeId,
     );
     const outcomeAccount = this.accountService.getAccountById(
@@ -89,15 +100,7 @@ export class TransferService {
       this.transferRepository.register(newTransfer);
       this.accountService.addBalance(incomeAccount.id, transfer.amount);
       this.accountService.removeBalance(outcomeAccount.id, transfer.amount);
-      newTransfer.income = this.accountService.getAccountById(
-        customerId,
-        transfer.incomeId,
-      );
-      newTransfer.outcome = this.accountService.getAccountById(
-        customerId,
-        transfer.outcomeId,
-      );
-      return newTransfer;
+      return JSON.stringify(this.formatTransfers([newTransfer]));
     }
     throw new ConflictException('Saldo insuficiente');
   }
@@ -107,17 +110,19 @@ export class TransferService {
     accountId: string,
     pagination: PaginationModel,
     dateRange?: DateRangeModel,
-  ): TransferEntity[] {
+  ): string {
     const currentTransfers =
       this.transferRepository.findByOutcomeAccount(accountId);
-    if (dateRange) {
-      const transfersDateRange = this.getTransfersDateRange(
-        currentTransfers,
-        dateRange,
-      );
-      return this.historyPagination(transfersDateRange, pagination);
-    }
-    return this.historyPagination(currentTransfers, pagination);
+    const pageTransfers = this.historyPagination(
+      currentTransfers,
+      pagination,
+      dateRange,
+    );
+    const result = {
+      ...pageTransfers,
+      transfers: this.formatTransfers(pageTransfers.transfers),
+    };
+    return JSON.stringify(result);
   }
 
   //Devuelve historial de transferencias con cuenta de salida enviada junto a paginacion y rangos
@@ -125,17 +130,19 @@ export class TransferService {
     accountId: string,
     pagination: PaginationModel,
     dateRange?: DateRangeModel,
-  ): TransferEntity[] {
+  ): string {
     const currentTransfers =
       this.transferRepository.findByIncomeAccount(accountId);
-    if (dateRange) {
-      const transfersDateRange = this.getTransfersDateRange(
-        currentTransfers,
-        dateRange,
-      );
-      return this.historyPagination(transfersDateRange, pagination);
-    }
-    return this.historyPagination(currentTransfers, pagination);
+    const pageTransfers = this.historyPagination(
+      currentTransfers,
+      pagination,
+      dateRange,
+    );
+    const result = {
+      ...pageTransfers,
+      transfers: this.formatTransfers(pageTransfers.transfers),
+    };
+    return JSON.stringify(result);
   }
 
   //Devuelve todas las transferencias realizadas segun paginacion y rango
@@ -143,20 +150,27 @@ export class TransferService {
     accountId: string,
     pagination: PaginationModel,
     dateRange?: DateRangeModel,
-  ): TransferEntity[] {
-    const currentTransfersOut =
+  ): string {
+    let currentTransfersOut =
       this.transferRepository.findByOutcomeAccount(accountId);
+    currentTransfersOut = JSON.parse(JSON.stringify(currentTransfersOut));
+
+    for (const out of currentTransfersOut) {
+      out.amount = out.amount * -1;
+    }
     const currentTransfersIn =
       this.transferRepository.findByIncomeAccount(accountId);
     const currentTransfers = [...currentTransfersIn, ...currentTransfersOut];
-    if (dateRange) {
-      const transfersDateRange = this.getTransfersDateRange(
-        currentTransfers,
-        dateRange,
-      );
-      return this.historyPagination(transfersDateRange, pagination);
-    }
-    return this.historyPagination(currentTransfers, pagination);
+    const pageTransfers = this.historyPagination(
+      currentTransfers,
+      pagination,
+      dateRange,
+    );
+    const result = {
+      ...pageTransfers,
+      transfers: this.formatTransfers(pageTransfers.transfers),
+    };
+    return JSON.stringify(result);
   }
 
   //Borrado de la transferencia enviada
@@ -172,20 +186,81 @@ export class TransferService {
     this.transferRepository.delete(transferId, true);
   }
 
+  getNegative(
+    accountId: string,
+    pagination: PaginationModel,
+    dateRange?: DateRangeModel,
+  ): string {
+    let currentTransfersOut =
+      this.transferRepository.findByOutcomeAccount(accountId);
+    currentTransfersOut = JSON.parse(JSON.stringify(currentTransfersOut));
+
+    for (const out of currentTransfersOut) {
+      out.amount = out.amount * -1;
+    }
+    const currentTransfersIn =
+      this.transferRepository.findByIncomeAccount(accountId);
+    const currentTransfers = [...currentTransfersIn, ...currentTransfersOut];
+    const pageTransfers = this.historyPagination(
+      currentTransfers,
+      pagination,
+      dateRange,
+    );
+    const result = {
+      ...pageTransfers,
+      transfers: this.formatTransfers(pageTransfers.transfers),
+    };
+    return JSON.stringify(result);
+  }
+
   //Metodo generico para paginacion
   private historyPagination(
-    transfersList: TransferEntity[],
+    transfers: TransferEntity[],
     pagination: PaginationModel,
-  ): TransferEntity[] {
+    dateRange?: DateRangeModel,
+  ): {
+    currentPage: number;
+    totalPages: number;
+    range: number;
+    size: number;
+    transfers: TransferEntity[];
+    dateInit?: number | Date;
+    dateEnd?: number | Date;
+  } {
+    transfers = transfers.reverse();
+    let dateRangeTransfers: TransferEntity[];
+    let dateInit: number | Date;
+    let dateEnd: number | Date;
+    if (dateRange) {
+      dateInit = dateRange.dateInit ?? new Date('1999-01-01').getTime();
+      dateEnd = dateRange.dateEnd ?? Date.now();
+      dateRangeTransfers = transfers.filter(
+        ({ dateTime }) => dateTime >= dateInit && dateTime <= dateEnd,
+      );
+    } else {
+      dateInit = new Date('1999-01-01').getTime();
+      dateEnd = Date.now();
+      dateRangeTransfers = transfers;
+    }
+    const size = dateRangeTransfers.length;
     const currentPage = pagination?.currentPage ?? 1;
     const range = pagination?.range ?? 10;
-    const transfers: TransferEntity[] = [];
+    const totalPages = Math.ceil(size / range);
+    const paginationTransfers: TransferEntity[] = [];
     const start = currentPage * range - range;
     const end = start + range;
     for (let i = start; i < end; i++) {
-      transfersList[i] ? transfers.push(transfersList[i]) : (i = end);
+      transfers[i] ? paginationTransfers.push(transfers[i]) : (i = end);
     }
-    return transfers;
+    return {
+      currentPage,
+      totalPages,
+      range,
+      size,
+      transfers: paginationTransfers,
+      dateInit,
+      dateEnd,
+    };
   }
 
   //retorna el array con el filtro de fechas
@@ -199,5 +274,38 @@ export class TransferService {
       ({ dateTime }) => dateTime >= dateInit && dateTime <= dateEnd,
     );
     return transfersDateRange;
+  }
+
+  private formatTransfers(transfers: TransferEntity[]): {
+    id: string;
+    incomeId: string;
+    outcomeId: string;
+    amount: number;
+    reason: string;
+    dateTime: number | Date;
+  }[] {
+    const newTransfers: {
+      id: string;
+      incomeId: string;
+      outcomeId: string;
+      amount: number;
+      reason: string;
+      dateTime: number | Date;
+    }[] = [];
+
+    for (const d of transfers) {
+      newTransfers.push({
+        id: d.id,
+        incomeId: d.income.id,
+        outcomeId: d.outcome.id,
+        amount: d.amount,
+        reason: d.reason,
+        dateTime: d.dateTime,
+      });
+    }
+    newTransfers.sort((p1, p2) =>
+      p1.dateTime < p2.dateTime ? 1 : p1.dateTime > p2.dateTime ? -1 : 0,
+    );
+    return newTransfers;
   }
 }

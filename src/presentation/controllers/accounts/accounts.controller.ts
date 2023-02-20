@@ -21,23 +21,21 @@ import { PaginationModel } from 'src/data/models';
 export class AccountsController {
   constructor(private readonly accountService: AccountService) {}
 
-  @Get()
+  @Post('all')
   @Auth()
   getAllAccounts(
     @Body() pagination: PaginationDto,
     @GetCustomer('id', ParseUUIDPipe) customerId: string,
   ): JSON {
     return JSON.parse(
-      JSON.stringify(
-        this.accountService.getAllAccounts(
-          customerId,
-          <PaginationModel>pagination,
-        ),
+      this.accountService.getAllByCustomer(
+        customerId,
+        <PaginationModel>pagination,
       ),
     );
   }
 
-  @Get(':id')
+  @Get('ownaccount/:id')
   @Auth()
   getAccountById(
     @Param('id', ParseUUIDPipe) accountId: string,
@@ -48,25 +46,30 @@ export class AccountsController {
     );
   }
 
-  @Post()
+  @Get('exist/:id')
+  @Auth()
+  exist(@Param('id') accountId: string): boolean {
+    return this.accountService.exist(accountId);
+  }
+
+  @Post('add')
   @Auth()
   createAccount(
     @Body() accountDto: CreateAccountDto,
-    @GetCustomer('id', ParseUUIDPipe) customerId: string,
+    @GetCustomer('id') customerId: string,
   ): JSON {
     return JSON.parse(
-      JSON.stringify(this.accountService.createAccount(customerId, accountDto)),
+      this.accountService.createAccount(customerId, accountDto),
     );
   }
 
-  @Auth()
   @Delete(':id')
+  @Auth()
   deleteAccount(
     @Param('id', ParseUUIDPipe) accountId: string,
     @GetCustomer('id', ParseUUIDPipe) customerId: string,
-  ): boolean {
-    this.accountService.deleteAccount(customerId, accountId);
-    return true;
+  ): JSON {
+    return JSON.parse(this.accountService.deleteAccount(customerId, accountId));
   }
 
   @Patch(':id')
@@ -74,12 +77,12 @@ export class AccountsController {
     @GetCustomer('id', ParseUUIDPipe) customerId: string,
     @Param('id', ParseUUIDPipe) accountId: string,
     @Body() updateAccountDto: UpdateAccountDto,
-  ): string {
+  ): JSON {
     this.accountService.changeState(
       customerId,
       accountId,
       updateAccountDto.state,
     );
-    return 'true';
+    return JSON.parse(JSON.stringify(true));
   }
 }

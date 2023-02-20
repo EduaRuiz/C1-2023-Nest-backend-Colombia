@@ -1,7 +1,6 @@
 import {
   Body,
   Controller,
-  Get,
   Param,
   ParseUUIDPipe,
   Post,
@@ -20,25 +19,26 @@ import { DateRangeModel, PaginationModel } from 'src/data/models';
 export class DepositsController {
   constructor(private readonly depositService: DepositService) {}
 
-  @Get()
+  @Post('all')
   @Auth()
   getAll(
     @GetCustomer('id', ParseUUIDPipe) customerId: string,
-    @Body() paginationDto: PaginationDto,
+    @Body('pagination') pagination: PaginationDto,
     @Body('dateRange') dateRange?: DateRangeDto,
   ): JSON {
     return JSON.parse(
       JSON.stringify(
         this.depositService.getHistoryByCustomer(
           customerId,
-          <PaginationModel>paginationDto,
+          <PaginationModel>pagination,
           <DateRangeModel>dateRange,
         ),
       ),
     );
   }
 
-  @Get(':id')
+  // Obtiene todas las transferencias por cuenta
+  @Post('all/:id')
   @Auth()
   getAllByAccount(
     @GetCustomer('id', ParseUUIDPipe) customerId: string,
@@ -47,27 +47,23 @@ export class DepositsController {
     @Body('dateRange') dateRange?: DateRangeDto,
   ): JSON {
     return JSON.parse(
-      JSON.stringify(
-        this.depositService.getHistory(
-          customerId,
-          accountId,
-          <PaginationModel>pagination,
-          <DateRangeModel>dateRange,
-        ),
+      this.depositService.getHistoryByAccount(
+        customerId,
+        accountId,
+        <PaginationModel>pagination,
+        <DateRangeModel>dateRange,
       ),
     );
   }
 
-  @Post()
+  @Post('add')
   @Auth()
   createDeposit(
     @Body() createDepositDto: CreateDepositDto,
     @GetCustomer('id', ParseUUIDPipe) customerId: string,
   ): JSON {
     return JSON.parse(
-      JSON.stringify(
-        this.depositService.createDeposit(customerId, createDepositDto),
-      ),
+      this.depositService.createDeposit(customerId, createDepositDto),
     );
   }
 
@@ -76,8 +72,7 @@ export class DepositsController {
   deleteDeposit(
     @Param('id', ParseUUIDPipe) depositId: string,
     @GetCustomer('id', ParseUUIDPipe) customerId: string,
-  ): boolean {
-    this.depositService.deleteDeposit(customerId, depositId);
-    return true;
+  ): JSON {
+    return JSON.parse(this.depositService.deleteDeposit(customerId, depositId));
   }
 }

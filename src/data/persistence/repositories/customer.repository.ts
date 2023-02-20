@@ -12,6 +12,16 @@ export class CustomerRepository
   extends BaseRepository<CustomerEntity>
   implements CustomerRepositoryInterface
 {
+  findOneByFirebase(firebaseId: string, firebaseEmail: string): CustomerEntity {
+    const currentCustomer = this.findAll().find(
+      (c) =>
+        c.firebaseId === firebaseId ||
+        c.email.toLowerCase() === firebaseEmail.toLowerCase(),
+    );
+    if (currentCustomer) return currentCustomer;
+
+    throw new NotFoundException('Usuario no existe en la base de datos');
+  }
   findOneByEmailAndPassword(email: string, password: string): boolean {
     const currentCustomer = this.findAll().find(
       (c) =>
@@ -73,7 +83,7 @@ export class CustomerRepository
     );
     if (currentCustomers) {
       throw new ConflictException(
-        'El cliente que intenta registrar ya existe en la base de datos',
+        'Correo y/o documento ya registrado en el sistema.',
       );
     }
     this.database.push(entity);

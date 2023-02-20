@@ -2,6 +2,7 @@ import { DocumentTypeModel } from './';
 
 export interface CustomerModel {
   id: string;
+  firebaseId?: string;
   documentType: DocumentTypeModel;
   document: string;
   fullName: string;

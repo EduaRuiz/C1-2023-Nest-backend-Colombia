@@ -3,6 +3,8 @@ import { Module } from '@nestjs/common';
 import { PassportModule } from '@nestjs/passport';
 import { JwtModule } from '@nestjs/jwt';
 import { JwtStrategy } from './business/services/security/jwt.strategy';
+import { GoogleStrategy } from './business/services/security/google.strategy';
+import { TransactionService } from './business/services/transaction/transaction.service';
 //Controllers
 import {
   AccountsController,
@@ -10,6 +12,7 @@ import {
   SecurityController,
   TransfersController,
   UsersController,
+  TransactionsController,
 } from './presentation/controllers';
 //Services
 import {
@@ -38,6 +41,7 @@ import {
     AccountsController,
     TransfersController,
     DepositsController,
+    TransactionsController,
   ],
   providers: [
     AccountService,
@@ -45,6 +49,7 @@ import {
     DepositService,
     TransferService,
     SecurityService,
+    TransactionService,
     AccountRepository,
     AccountTypeRepository,
     TransferRepository,
@@ -52,13 +57,13 @@ import {
     CustomerRepository,
     DocumentTypeRepository,
     JwtStrategy,
-    // JwtService,
+    GoogleStrategy,
   ],
   imports: [
     PassportModule.register({ defaultStrategy: 'jwt' }),
     JwtModule.register({
       secret: jwtConstants.JTW_SECRET,
-      signOptions: { expiresIn: '2h' },
+      signOptions: { expiresIn: '10m' },
     }),
   ],
   exports: [
@@ -67,6 +72,7 @@ import {
     DepositService,
     TransferService,
     SecurityService,
+    TransactionService,
     AccountRepository,
     AccountTypeRepository,
     TransferRepository,
@@ -76,6 +82,7 @@ import {
     PassportModule,
     JwtModule,
     JwtStrategy,
+    GoogleStrategy,
   ],
 })
 export class AppModule {}

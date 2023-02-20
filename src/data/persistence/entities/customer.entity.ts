@@ -4,6 +4,7 @@ import { CustomerModel } from 'src/data/models';
 
 export class CustomerEntity implements CustomerModel {
   id = uuid();
+  firebaseId?: string;
   documentType: DocumentTypeEntity;
   document: string;
   fullName: string;

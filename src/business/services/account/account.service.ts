@@ -24,27 +24,53 @@ export class AccountService {
     private readonly customerRepository: CustomerRepository,
   ) {}
   //Retorna el liestado de todas las cuentas, este metodo solo se usaria para administradores pero por ahora todos
-  getAllAccounts(
-    customerId: string,
-    paginationModel: PaginationModel,
-  ): AccountEntity[] {
-    const accounts = this.accountRepository.findByCustomer(customerId);
-    return this.historyPagination(accounts, paginationModel);
+  getAll(pagination: PaginationModel): string {
+    const accounts = this.accountRepository.findAll();
+    const pageAccounts = this.historyPagination(accounts, pagination);
+    const result = {
+      ...pageAccounts,
+      accounts: this.formatAccounts(pageAccounts.accounts),
+    };
+    return JSON.stringify(result);
   }
 
-  //Retorna la cuenta segun el id
+  //Trae todas las cuentas relacionadas al cliente
+  getAllByCustomer(customerId: string, pagination: PaginationModel): string {
+    const accounts = this.accountRepository.findByCustomer(customerId);
+    const pageAccounts = this.historyPagination(accounts, pagination);
+    const result = {
+      ...pageAccounts,
+      accounts: this.formatAccounts(pageAccounts.accounts),
+    };
+    return JSON.stringify(result);
+  }
+
+  //Retorna la cuenta segun el id y el cliente
   getAccountById(customerId: string, accountId: string): AccountEntity {
     const account = this.accountRepository.findOneById(accountId);
     if (account.customer.id !== customerId) {
       throw new UnauthorizedException(
-        'El id de cuenta no existe o no pertenece al cliente ',
+        'El id de cuenta no existe o no pertenece al cliente',
       );
     }
     return this.accountRepository.findOneById(accountId);
   }
 
+  getAnyAccountById(accountId: string): AccountEntity {
+    return this.accountRepository.findOneById(accountId);
+  }
+
+  exist(accountId: string): boolean {
+    try {
+      this.accountRepository.findOneById(accountId);
+      return true;
+    } catch (error) {
+      return false;
+    }
+  }
+
   //Creacion de cuentas
-  createAccount(customerId: string, account: CreateAccountDto): AccountEntity {
+  createAccount(customerId: string, account: CreateAccountDto): string {
     const currentAccountType = this.getAccountType(account.accountTypeId);
     const currentCustomer = this.customerRepository.findOneById(customerId);
     const newAccount = new AccountEntity();
@@ -52,9 +78,21 @@ export class AccountService {
     newAccount.customer = currentCustomer;
     newAccount.balance = 0;
     this.accountRepository.register(newAccount);
-    return newAccount;
+    const result = {
+      id: newAccount.id,
+      customerId: newAccount.customer.id,
+      accountType: {
+        id: newAccount.accountType.id,
+        name: newAccount.accountType.name,
+      },
+      balance: newAccount.balance,
+    };
+    return JSON.stringify(result);
   }
 
+  getAccountsByCustomer(customerId: string): AccountEntity[] {
+    return this.accountRepository.findByCustomer(customerId);
+  }
   //Consultar solo cuentas activas
   private getOneActiveState(accountId: string): AccountEntity {
     if (!this.getState(accountId)) {
@@ -128,7 +166,7 @@ export class AccountService {
   }
 
   //Eliminar una cuenta
-  deleteAccount(customerId: string, accountId: string): void {
+  deleteAccount(customerId: string, accountId: string): string {
     const currentAccount = this.accountRepository.findOneById(accountId);
     if (currentAccount.customer.id !== customerId) {
       throw new UnauthorizedException(
@@ -163,25 +201,54 @@ export class AccountService {
         `No se puede eliminar la cuenta con el id ${accountId} ya que tiene saldo!`,
       );
     }
-  }
-
-  //Trae todas las cuentas relacionadas al cliente
-  getAccountsByCustomer(customerId: string): AccountEntity[] {
-    return this.accountRepository.findByCustomer(customerId);
+    return JSON.stringify(true);
   }
 
   private historyPagination(
     accountsList: AccountEntity[],
     pagination: PaginationModel,
-  ): AccountEntity[] {
+  ): {
+    currentPage: number;
+    totalPages: number;
+    range: number;
+    size: number;
+    accounts: AccountEntity[];
+  } {
+    accountsList = accountsList.reverse();
+    const size = accountsList.length;
     const currentPage = pagination?.currentPage ?? 1;
     const range = pagination?.range ?? 10;
+    const totalPages = Math.ceil(size / range);
     const accounts: AccountEntity[] = [];
     const start = currentPage * range - range;
     const end = start + range;
     for (let i = start; i < end; i++) {
       accountsList[i] ? accounts.push(accountsList[i]) : (i = end);
     }
-    return accounts;
+    return { currentPage, totalPages, range, size, accounts };
+  }
+
+  private formatAccounts(accounts: AccountEntity[]): {
+    id: string;
+    customerId: string;
+    accountType: { id: string; name: string };
+    balance: number;
+  }[] {
+    const newAccounts: {
+      id: string;
+      customerId: string;
+      accountType: { id: string; name: string };
+      balance: number;
+    }[] = [];
+
+    for (const a of accounts) {
+      newAccounts.push({
+        id: a.id,
+        customerId: a.customer.id,
+        accountType: { id: a.accountType.id, name: a.accountType.name },
+        balance: a.balance,
+      });
+    }
+    return newAccounts;
   }
 }
