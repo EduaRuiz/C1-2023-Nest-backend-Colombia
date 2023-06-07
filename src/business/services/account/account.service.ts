@@ -165,6 +165,14 @@ export class AccountService {
     return this.accountRepository.upate(accountId, currentAccount);
   }
 
+  getTotalBalanceAllAccountsCustomerId(customerId: string): number {
+    let total = 0;
+    this.accountRepository
+      .findByCustomer(customerId)
+      .forEach((account) => (total += account.balance));
+    return total;
+  }
+
   //Eliminar una cuenta
   deleteAccount(customerId: string, accountId: string): string {
     const currentAccount = this.accountRepository.findOneById(accountId);

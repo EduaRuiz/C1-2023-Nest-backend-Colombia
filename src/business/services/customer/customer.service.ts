@@ -50,7 +50,7 @@ export class CustomerService {
   unsubscribe(currentCustomerId: string, customerId: string): boolean {
     if (currentCustomerId !== customerId) {
       throw new UnauthorizedException(
-        'El usuario a eliminar no existe o es el mismo cliente',
+        'El usuario a eliminar no existe o no es el mismo cliente',
       );
     }
     const currentAccounts =

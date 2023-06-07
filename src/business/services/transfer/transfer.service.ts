@@ -26,9 +26,16 @@ export class TransferService {
     const accounts = this.accountService.getAccountsByCustomer(customerId);
     const totalTransfers: TransferEntity[] = [];
     for (const account of accounts) {
+      let currentTransfersOut = this.transferRepository.findByOutcomeAccount(
+        account.id,
+      );
+      currentTransfersOut = JSON.parse(JSON.stringify(currentTransfersOut));
+      for (const out of currentTransfersOut) {
+        out.amount = out.amount * -1;
+      }
       totalTransfers.push(
         ...this.transferRepository.findByIncomeAccount(account.id),
-        ...this.transferRepository.findByOutcomeAccount(account.id),
+        ...currentTransfersOut,
       );
     }
     const pageTransfers = this.historyPagination(
@@ -36,7 +43,11 @@ export class TransferService {
       pagination,
       dateRange,
     );
-    return JSON.stringify(pageTransfers);
+    const result = {
+      ...pageTransfers,
+      transfers: this.formatTransfers(pageTransfers.transfers),
+    };
+    return JSON.stringify(result);
   }
 
   getHistoryOutByCustomer(
@@ -154,7 +165,6 @@ export class TransferService {
     let currentTransfersOut =
       this.transferRepository.findByOutcomeAccount(accountId);
     currentTransfersOut = JSON.parse(JSON.stringify(currentTransfersOut));
-
     for (const out of currentTransfersOut) {
       out.amount = out.amount * -1;
     }
@@ -261,19 +271,6 @@ export class TransferService {
       dateInit,
       dateEnd,
     };
-  }
-
-  //retorna el array con el filtro de fechas
-  private getTransfersDateRange(
-    transfers: TransferEntity[],
-    dateRange: DateRangeModel,
-  ): TransferEntity[] {
-    const dateInit = dateRange.dateInit ?? new Date('1999-01-01').getTime();
-    const dateEnd = dateRange.dateEnd ?? Date.now();
-    const transfersDateRange = transfers.filter(
-      ({ dateTime }) => dateTime >= dateInit && dateTime <= dateEnd,
-    );
-    return transfersDateRange;
   }
 
   private formatTransfers(transfers: TransferEntity[]): {

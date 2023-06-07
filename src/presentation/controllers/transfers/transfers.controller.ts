@@ -27,12 +27,10 @@ export class TransfersController {
     @Body('dateRange') dateRange?: DateRangeDto,
   ): JSON {
     return JSON.parse(
-      JSON.stringify(
-        this.transferService.getHistoryInByCustomer(
-          customerId,
-          <PaginationModel>pagination,
-          <DateRangeModel>dateRange,
-        ),
+      this.transferService.getAllByCustomer(
+        customerId,
+        <PaginationModel>pagination,
+        <DateRangeModel>dateRange,
       ),
     );
   }

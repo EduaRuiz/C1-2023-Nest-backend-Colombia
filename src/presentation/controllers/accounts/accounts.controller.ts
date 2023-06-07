@@ -35,6 +35,14 @@ export class AccountsController {
     );
   }
 
+  @Get('ownaccount/balance')
+  @Auth()
+  getTotalBalanceAllAccounts(
+    @GetCustomer('id', ParseUUIDPipe) customerId: string,
+  ): number {
+    return this.accountService.getTotalBalanceAllAccountsCustomerId(customerId);
+  }
+
   @Get('ownaccount/:id')
   @Auth()
   getAccountById(
